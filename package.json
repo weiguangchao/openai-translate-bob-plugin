@@ -1,0 +1,11 @@
+{
+  "name": "openai-translate-bob-plugin",
+  "version": "0.1.7",
+  "private": true,
+  "description": "OpenAI-compatible translation for Bob 0.10.2",
+  "engines": { "node": ">=20" },
+  "scripts": {
+    "build": "node tools/build.js",
+    "test": "node --test test/*.test.js"
+  }
+}

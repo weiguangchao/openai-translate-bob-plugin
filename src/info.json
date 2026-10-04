@@ -1,0 +1,28 @@
+{
+  "identifier": "com.weiguangchao.openai.translate",
+  "version": "0.1.7",
+  "category": "translate",
+  "name": "OpenAI 兼容翻译",
+  "summary": "通过 OpenAI 兼容接口翻译；支持 Bob 0.10.2。",
+  "icon": "001",
+  "minBobVersion": "0.10.2",
+  "options": [
+    {
+      "identifier": "baseUrl",
+      "type": "text",
+      "title": "Base URL",
+      "defaultValue": "https://api.openai.com/v1",
+      "desc": "填写 API 根地址，包含服务商要求的 /v1 等前缀，不包含 /chat/completions。"
+    },
+    {
+      "identifier": "apiKey",
+      "type": "text",
+      "title": "API Key"
+    },
+    {
+      "identifier": "model",
+      "type": "text",
+      "title": "模型 ID"
+    }
+  ]
+}
