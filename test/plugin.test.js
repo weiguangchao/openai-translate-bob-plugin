@@ -110,6 +110,51 @@ test('invalid settings and languages fail before sending text to a provider', as
   });
 });
 
+test('an empty choices array is retried once with the source wrapped in source tags', () => {
+  const responses = [
+    { response: { statusCode: 200 }, data: { id: 'empty', object: 'chat.completion', model: 'gemini-3.8-flash-n', choices: [], usage: { completion_tokens: 0, prompt_tokens: 51, total_tokens: 51 } } },
+    { response: { statusCode: 200 }, data: { choices: [{ message: { content: '照看孩子' }, finish_reason: 'stop' }] } }
+  ];
+  const bob = plugin({}, request => request.handler(responses.shift()));
+  const results = bob.translate({ text: 'Babysit', from: 'en', to: 'zh-Hans' });
+  assert.equal(bob.requests.length, 2);
+  assert.equal(bob.requests[0].body.messages[1].content, 'Babysit');
+  assert.equal(bob.requests[1].body.model, 'provider/model-a');
+  assert.equal(bob.requests[1].body.stream, false);
+  assert.equal(bob.requests[1].body.reasoning_effort, 'low');
+  assert.equal(bob.requests[1].url, bob.requests[0].url);
+  assert.equal(bob.requests[1].header.Authorization, bob.requests[0].header.Authorization);
+  assert.equal(bob.requests[1].body.messages[1].content, '<source>\nBabysit\n</source>');
+  assert.match(bob.requests[1].body.messages[0].content, /English.*Simplified Chinese/);
+  assert.match(bob.requests[1].body.messages[0].content, /<source> tags/);
+  assert.deepEqual(results, [{ result: { from: 'en', to: 'zh-Hans', toParagraphs: ['照看孩子'] } }]);
+});
+
+test('a duplicate callback for an empty choices response still retries only once', () => {
+  const bob = plugin({}, request => {
+    if (request.body.messages[1].content === 'Babysit') {
+      const empty = { response: { statusCode: 200 }, data: { choices: [] } };
+      request.handler(empty);
+      request.handler(empty);
+      return;
+    }
+    request.handler({ response: { statusCode: 200 }, data: { choices: [{ message: { content: '照看孩子' }, finish_reason: 'stop' }] } });
+    request.handler({ response: { statusCode: 200 }, data: { choices: [{ message: { content: '照看孩子' }, finish_reason: 'stop' }] } });
+  });
+  const results = bob.translate({ text: 'Babysit' });
+  assert.equal(bob.requests.length, 2);
+  assert.deepEqual(results, [{ result: { from: 'en', to: 'zh-Hans', toParagraphs: ['照看孩子'] } }]);
+});
+
+test('a second empty choices response is reported once', () => {
+  const bob = plugin({}, request => request.handler({ response: { statusCode: 200 }, data: { choices: [] } }));
+  const results = bob.translate({ text: 'Babysit' });
+  assert.equal(bob.requests.length, 2);
+  assert.equal(results.length, 1);
+  assert.equal(results[0].error.type, 'api');
+  assert.match(results[0].error.message, /choices/);
+});
+
 test('provider errors are reported once, without exposing the key or accepting partial translations', async t => {
   const cases = [
     ['unauthorized', { response: { statusCode: 401 }, data: { error: { message: 'Invalid test-secret' } } }, 'secretKey', /401/],

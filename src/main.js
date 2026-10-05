@@ -23,13 +23,30 @@ function translate(query, completion) {
     var to = request.to;
     delete request.from;
     delete request.to;
-    request.handler = function (response) {
-      try {
-        var text = api.translationText(api.responseData(response, apiKey));
-        // One paragraph preserves the model's own line breaks on old Bob versions.
-        finish({ result: { from: from, to: to, toParagraphs: [text] } });
-      } catch (error) { report(error); }
-    };
-    $http.request(request);
+    var retrying = false;
+    function send(payload, canRetry) {
+      payload.handler = function (response) {
+        if (completed) return;
+        try {
+          var text;
+          try {
+            text = api.translationText(api.responseData(response, apiKey));
+          } catch (error) {
+            if (canRetry && error.emptyChoices && !retrying) {
+              retrying = true;
+              send(api.translationRetryRequest(payload), false);
+              return;
+            }
+            // Ignore a duplicate callback for the request that started the retry.
+            if (retrying && canRetry) return;
+            throw error;
+          }
+          // One paragraph preserves the model's own line breaks on old Bob versions.
+          finish({ result: { from: from, to: to, toParagraphs: [text] } });
+        } catch (error) { report(error); }
+      };
+      $http.request(payload);
+    }
+    send(request, true);
   } catch (error) { report(error); }
 }

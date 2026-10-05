@@ -1,6 +1,6 @@
 {
   "identifier": "com.weiguangchao.openai.translate",
-  "version": "0.1.7",
+  "version": "0.1.8",
   "category": "translate",
   "name": "OpenAI 兼容翻译",
   "summary": "通过 OpenAI 兼容接口翻译；支持 Bob 0.10.2。",

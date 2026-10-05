@@ -100,9 +100,39 @@ function translationRequest(options, query) {
   };
 }
 
+function translationRetryRequest(request) {
+  var body = request.body || {};
+  var messages = body.messages || [];
+  var system = messages[0] && messages[0].content || '';
+  var source = messages[1] && typeof messages[1].content === 'string' ? messages[1].content : '';
+  return {
+    method: request.method,
+    url: request.url,
+    header: request.header,
+    timeout: request.timeout,
+    body: {
+      model: body.model,
+      stream: false,
+      reasoning_effort: body.reasoning_effort,
+      messages: [
+        {
+          role: 'system',
+          content: system + ' The source text is wrapped in <source> tags. Translate only that text, and do not include the tags.'
+        },
+        { role: 'user', content: '<source>\n' + source + '\n</source>' }
+      ]
+    }
+  };
+}
+
 function translationText(data) {
   var choice = data.choices && data.choices[0];
-  if (!choice) throw fail('api', '接口没有返回 choices 结果。');
+  if (!choice) {
+    var error = fail('api', '接口没有返回 choices 结果。');
+    // Gemini can answer HTTP 200 with choices: [] for a bare word such as "Babysit".
+    error.emptyChoices = true;
+    throw error;
+  }
   if (choice.finish_reason === 'length') throw fail('api', '译文超出模型输出长度限制，请缩短原文后重试。');
   if (choice.finish_reason === 'content_filter' || (choice.message && choice.message.refusal)) {
     throw fail('api', '模型拒绝了本次翻译，请修改原文或选择其他模型。');
@@ -120,5 +150,6 @@ module.exports = {
   redact: redact,
   responseData: responseData,
   translationRequest: translationRequest,
+  translationRetryRequest: translationRetryRequest,
   translationText: translationText
 };
