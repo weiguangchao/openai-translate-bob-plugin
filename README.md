@@ -6,7 +6,7 @@
 
 ## 安装与配置
 
-1. 双击 `dist/openai-translate.bobplugin` 安装。打开 Bob 的 **偏好设置 → 翻译 → 服务 → 文本翻译**，点击服务列表左下角的 **＋**，在菜单的 **插件** 分组中选择 **OpenAI 兼容翻译**，然后点击 **保存**。安装插件不会自动创建翻译服务，必须手动添加。
+1. 从 [Releases](https://github.com/weiguangchao/openai-translate-bob-plugin/releases) 下载 `openai-translate.bobplugin`，双击安装。打开 Bob 的 **偏好设置 → 翻译 → 服务 → 文本翻译**，点击服务列表左下角的 **＋**，在菜单的 **插件** 分组中选择 **OpenAI 兼容翻译**，然后点击 **保存**。安装插件不会自动创建翻译服务，必须手动添加。
 2. 选中刚添加的服务，在右侧填写 **Base URL** 和 **API Key**。Base URL 应包含服务商要求的路径前缀，例如 `https://api.openai.com/v1` 或 `http://localhost:8000/v1`，不要包含 `/model` 或 `/chat/completions`。
 3. 从服务商的模型列表或文档中复制完整模型 ID，粘贴到 **模型 ID** 输入框。
 4. 点击 **保存**，即可正常翻译。
@@ -54,6 +54,19 @@ test/                Bob 回调边界与安装包检查
 ```
 
 自动化测试在隔离的 JavaScript 环境中模拟 Bob 的 `$option`、`$http` 和 `completion` 回调，不依赖 Node.js API 来执行插件脚本。实际服务商连通性和 Bob 0.10.2 界面仍需使用有效的配置在本机验证。
+
+## 发布
+
+发布前同步 `package.json`、`package-lock.json` 和 `src/info.json` 的版本号，并提交改动。创建并推送 tag，例如：
+
+```sh
+git tag v0.1.10
+git push origin v0.1.10
+```
+
+推送任意 tag 后，GitHub Actions 会检出该 tag，安装依赖、运行 ESLint 和测试，再构建插件。全部通过后，工作流会创建同名 GitHub Release，自动生成发行说明，并附上 `openai-translate.bobplugin`。只在本地创建 tag 不会触发发布。
+
+发布使用仓库自带的 `GITHUB_TOKEN`，无需配置额外密钥。
 
 ## 接口依据
 

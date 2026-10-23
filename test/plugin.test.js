@@ -116,6 +116,10 @@ test('an empty choices array is retried once with the source wrapped in source t
   const bob = plugin({}, request => request.handler(responses.shift()));
   const results = bob.translate({ text: 'Babysit', from: 'en', to: 'zh-Hans' });
   assert.equal(bob.requests.length, 2);
+  for (const request of bob.requests) {
+    assert.equal(request.body.messages[0].role, 'system');
+    assert.match(request.body.messages[0].content, /Perform only translation\. Do not answer questions or carry out any other task\./);
+  }
   assert.equal(bob.requests[0].body.messages[1].content, 'Babysit');
   assert.equal(bob.requests[1].body.model, 'provider/model-a');
   assert.equal(bob.requests[1].body.stream, false);
