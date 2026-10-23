@@ -88,7 +88,6 @@ function translationRequest(options, query) {
     body: {
       model: model,
       stream: false,
-      reasoning_effort: 'low',
       messages: [
         { role: 'system', content: instruction },
         { role: 'user', content: query.text }
@@ -113,7 +112,6 @@ function translationRetryRequest(request) {
     body: {
       model: body.model,
       stream: false,
-      reasoning_effort: body.reasoning_effort,
       messages: [
         {
           role: 'system',

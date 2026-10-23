@@ -19,7 +19,7 @@ Base URL、API Key 和模型 ID 均不能为空，也不能包含任何空白字
 
 ## 接口行为
 
-翻译固定请求 `POST {baseUrl}/chat/completions`，请求体包含 `model`、`messages`、`stream: false` 和 `reasoning_effort: "low"`。思考级别固定为 low，用来缩短推理模型的响应时间。
+翻译固定请求 `POST {baseUrl}/chat/completions`，请求体包含 `model`、`messages` 和 `stream: false`。首次请求和重试请求均不发送 `reasoning_effort`，由上游服务商自行决定思考级别。
 
 请求使用 `Authorization: Bearer {apiKey}`。插件不会自动添加 `/v1`，因此自定义网关的路径前缀会保留。填写的模型必须支持 Chat Completions。
 
