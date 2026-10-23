@@ -1,4 +1,3 @@
-// Bob language codes, not provider-specific ISO aliases.
 module.exports = {
   "auto": "Auto",
   "zh-Hans": "Simplified Chinese",

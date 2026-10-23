@@ -127,7 +127,6 @@ function translationText(data) {
   var choice = data.choices && data.choices[0];
   if (!choice) {
     var error = fail('api', '接口没有返回 choices 结果。');
-    // Gemini can answer HTTP 200 with choices: [] for a bare word such as "Babysit".
     error.emptyChoices = true;
     throw error;
   }

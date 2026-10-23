@@ -3,9 +3,15 @@
   "version": "0.1.9",
   "private": true,
   "description": "OpenAI-compatible translation for Bob 0.10.2",
-  "engines": { "node": ">=20" },
+  "engines": { "node": "^20.19.0 || ^22.13.0 || >=24" },
   "scripts": {
+    "lint": "eslint . --max-warnings=0",
+    "prebuild": "npm run lint",
     "build": "node tools/build.js",
+    "pretest": "npm run lint",
     "test": "node --test test/*.test.js"
+  },
+  "devDependencies": {
+    "eslint": "^10.13.0"
   }
 }

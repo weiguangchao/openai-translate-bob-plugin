@@ -13,7 +13,6 @@ async function main() {
       await fs.copyFile(path.join(root, 'src', file), path.join(staging, file));
     }
     await fs.mkdir(path.dirname(output), { recursive: true });
-    // Build a fresh archive; updating an existing ZIP can retain removed files.
     const archive = path.join(staging, 'plugin.zip');
     execFileSync('zip', ['-q', '-X', archive, ...files], { cwd: staging });
     await fs.copyFile(archive, output);

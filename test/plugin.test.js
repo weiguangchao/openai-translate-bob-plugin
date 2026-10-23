@@ -4,7 +4,6 @@ const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
 
-// Execute the actual Bob entry point without Node's globals or newer Bob APIs.
 function plugin(options = {}, respond) {
   const requests = [];
   const scope = vm.createContext({

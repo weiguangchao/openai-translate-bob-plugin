@@ -31,12 +31,16 @@ Bob 0.10.2 不支持流式插件接口，因此本插件等待完整译文后显
 
 ## 开发与打包
 
-需要 Node.js 20 或更新版本，以及 macOS 自带的 `zip` / `unzip`。没有第三方 npm 依赖。
+需要 Node.js 20.19+、22.13+ 或 24 及更新版本，以及 macOS 自带的 `zip` / `unzip`。ESLint 仅用于开发检查，插件运行时没有 npm 依赖。
 
 ```sh
+npm ci
+npm run lint
 npm test
 npm run build
 ```
+
+所有 JavaScript 文件禁止任何注释，包括行注释、块注释和 ESLint 指令注释。测试和打包前会自动运行 ESLint，检查失败时停止执行。
 
 输出为 `dist/openai-translate.bobplugin`。安装包根目录直接包含 `info.json`、`main.js` 和依赖脚本，不包含父目录、测试文件或 API Key。重新构建后再次双击安装以更新插件。
 

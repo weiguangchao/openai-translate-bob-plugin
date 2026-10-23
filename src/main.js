@@ -5,7 +5,6 @@ function supportLanguages() {
   return Object.keys(languages);
 }
 
-// Bob 0.10.2 uses completion, not query.onCompletion or streamRequest.
 function translate(query, completion) {
   var completed = false;
   var apiKey = typeof $option.apiKey === 'string' ? $option.apiKey.trim() : '';
@@ -37,11 +36,9 @@ function translate(query, completion) {
               send(api.translationRetryRequest(payload), false);
               return;
             }
-            // Ignore a duplicate callback for the request that started the retry.
             if (retrying && canRetry) return;
             throw error;
           }
-          // One paragraph preserves the model's own line breaks on old Bob versions.
           finish({ result: { from: from, to: to, toParagraphs: [text] } });
         } catch (error) { report(error); }
       };
