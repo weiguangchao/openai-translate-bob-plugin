@@ -44,7 +44,7 @@ test('Bob translates with a pasted model ID even when the old model-list action 
   assert.equal(request.header['Content-Type'], 'application/json');
   assert.equal(request.body.model, 'provider/model-a');
   assert.equal(request.body.stream, false);
-  assert.equal(Object.hasOwn(request.body, 'reasoning_effort'), false);
+  assert.equal(request.body.reasoning_effort, 'low');
   assert.equal(request.body.messages[1].content, 'Hello.\n\nWorld.');
   assert.match(request.body.messages[0].content, /English.*Simplified Chinese/);
   assert.deepEqual(results, [{ result: { from: 'en', to: 'zh-Hans', toParagraphs: ['你好。\n\n世界。'] } }]);
@@ -123,7 +123,7 @@ test('an empty choices array is retried once with the source wrapped in source t
   assert.equal(bob.requests[0].body.messages[1].content, 'Babysit');
   assert.equal(bob.requests[1].body.model, 'provider/model-a');
   assert.equal(bob.requests[1].body.stream, false);
-  assert.equal(Object.hasOwn(bob.requests[1].body, 'reasoning_effort'), false);
+  assert.equal(bob.requests[1].body.reasoning_effort, 'low');
   assert.equal(bob.requests[1].url, bob.requests[0].url);
   assert.equal(bob.requests[1].header.Authorization, bob.requests[0].header.Authorization);
   assert.equal(bob.requests[1].body.messages[1].content, '<source>\nBabysit\n</source>');

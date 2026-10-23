@@ -88,6 +88,7 @@ function translationRequest(options, query) {
     header: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + config.apiKey },
     body: {
       model: model,
+      reasoning_effort: 'low',
       stream: false,
       messages: [
         { role: 'system', content: instruction },
@@ -112,6 +113,7 @@ function translationRetryRequest(request) {
     timeout: request.timeout,
     body: {
       model: body.model,
+      reasoning_effort: body.reasoning_effort,
       stream: false,
       messages: [
         {

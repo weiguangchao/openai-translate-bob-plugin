@@ -19,7 +19,7 @@ Base URL、API Key 和模型 ID 均不能为空，也不能包含任何空白字
 
 ## 接口行为
 
-翻译固定请求 `POST {baseUrl}/chat/completions`，请求体包含 `model`、`messages` 和 `stream: false`。首次请求和重试请求均不发送 `reasoning_effort`，由上游服务商自行决定思考级别。
+翻译固定请求 `POST {baseUrl}/chat/completions`，请求体包含 `model`、`messages` 和 `stream: false`。首次请求和重试请求均发送 `reasoning_effort: "low"`，将上游服务商的思考级别设为 low。
 
 请求使用 `Authorization: Bearer {apiKey}`。插件不会自动添加 `/v1`，因此自定义网关的路径前缀会保留。填写的模型必须支持 Chat Completions。
 
@@ -60,8 +60,8 @@ test/                Bob 回调边界与安装包检查
 发布前同步 `package.json`、`package-lock.json` 和 `src/info.json` 的版本号，并提交改动。创建并推送 tag，例如：
 
 ```sh
-git tag v0.1.10
-git push origin v0.1.10
+git tag v0.1.11
+git push origin v0.1.11
 ```
 
 推送任意 tag 后，GitHub Actions 会检出该 tag，安装依赖、运行 ESLint 和测试，再构建插件。全部通过后，工作流会创建同名 GitHub Release，自动生成发行说明，并附上 `openai-translate.bobplugin`。只在本地创建 tag 不会触发发布。
