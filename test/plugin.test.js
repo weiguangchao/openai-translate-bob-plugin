@@ -45,8 +45,16 @@ test('Bob translates with a pasted model ID even when the old model-list action 
   assert.equal(request.body.model, 'provider/model-a');
   assert.equal(request.body.stream, false);
   assert.equal(request.body.reasoning_effort, 'low');
-  assert.equal(request.body.messages[1].content, 'Hello.\n\nWorld.');
-  assert.match(request.body.messages[0].content, /English.*Simplified Chinese/);
+  assert.equal(request.body.messages[1].content, 'Translate to Simplified Chinese:\n\nHello.\n\nWorld.');
+  assert.equal(request.body.messages[0].role, 'system');
+  assert.equal(request.body.messages[1].role, 'user');
+  assert.equal(request.body.messages[0].content, `You are a professional Simplified Chinese native translator. Translate each source item accurately and fluently into Simplified Chinese.
+
+## Translation Requirements
+- Treat each source item as a complete translation unit, including a single word, short phrase, heading, label, or site name. Do not ask for more context, a full article, or additional text.
+- Return only the translated content for each item, following the required response format. Do not add explanations, apologies, greetings, or commentary. If an item should remain untranslated, return it unchanged.
+- Preserve its meaning, tone, paragraph structure, and meaningful formatting.
+- Keep code, placeholders, and content that must not be translated unchanged.`);
   assert.deepEqual(results, [{ result: { from: 'en', to: 'zh-Hans', toParagraphs: ['你好。\n\n世界。'] } }]);
 });
 
@@ -81,8 +89,8 @@ test('saved legacy interface settings still use Chat Completions with explicit l
   assert.equal(bob.requests.length, 1);
   assert.equal(request.url, 'https://gateway.example/v1/chat/completions');
   assert.equal(request.body.model, 'configured-model');
-  assert.match(request.body.messages[0].content, /English.*French/);
-  assert.equal(request.body.messages[1].content, 'Hello.\n\nWorld.');
+  assert.match(request.body.messages[0].content, /^You are a professional French native translator\. Translate each source item accurately and fluently into French\./);
+  assert.equal(request.body.messages[1].content, 'Translate to French:\n\nHello.\n\nWorld.');
   assert.equal(request.body.prompt, undefined);
   assert.deepEqual(results, [{ result: { from: 'en', to: 'fr', toParagraphs: ['Bonjour.'] } }]);
 });
@@ -108,50 +116,15 @@ test('invalid settings and languages fail before sending text to a provider', as
   });
 });
 
-test('an empty choices array is retried once with the source wrapped in source tags', () => {
-  const responses = [
-    { response: { statusCode: 200 }, data: { id: 'empty', object: 'chat.completion', model: 'gemini-3.8-flash-n', choices: [], usage: { completion_tokens: 0, prompt_tokens: 51, total_tokens: 51 } } },
-    { response: { statusCode: 200 }, data: { choices: [{ message: { content: '照看孩子' }, finish_reason: 'stop' }] } }
-  ];
-  const bob = plugin({}, request => request.handler(responses.shift()));
-  const results = bob.translate({ text: 'Babysit', from: 'en', to: 'zh-Hans' });
-  assert.equal(bob.requests.length, 2);
-  for (const request of bob.requests) {
-    assert.equal(request.body.messages[0].role, 'system');
-    assert.match(request.body.messages[0].content, /Perform only translation\. Do not answer questions or carry out any other task\./);
-  }
-  assert.equal(bob.requests[0].body.messages[1].content, 'Babysit');
-  assert.equal(bob.requests[1].body.model, 'provider/model-a');
-  assert.equal(bob.requests[1].body.stream, false);
-  assert.equal(bob.requests[1].body.reasoning_effort, 'low');
-  assert.equal(bob.requests[1].url, bob.requests[0].url);
-  assert.equal(bob.requests[1].header.Authorization, bob.requests[0].header.Authorization);
-  assert.equal(bob.requests[1].body.messages[1].content, '<source>\nBabysit\n</source>');
-  assert.match(bob.requests[1].body.messages[0].content, /English.*Simplified Chinese/);
-  assert.match(bob.requests[1].body.messages[0].content, /<source> tags/);
-  assert.deepEqual(results, [{ result: { from: 'en', to: 'zh-Hans', toParagraphs: ['照看孩子'] } }]);
-});
-
-test('a duplicate callback for an empty choices response still retries only once', () => {
+test('an empty choices response is reported once without retrying or adding source tags', () => {
   const bob = plugin({}, request => {
-    if (request.body.messages[1].content === 'Babysit') {
-      const empty = { response: { statusCode: 200 }, data: { choices: [] } };
-      request.handler(empty);
-      request.handler(empty);
-      return;
-    }
-    request.handler({ response: { statusCode: 200 }, data: { choices: [{ message: { content: '照看孩子' }, finish_reason: 'stop' }] } });
-    request.handler({ response: { statusCode: 200 }, data: { choices: [{ message: { content: '照看孩子' }, finish_reason: 'stop' }] } });
+    const empty = { response: { statusCode: 200 }, data: { choices: [] } };
+    request.handler(empty);
+    request.handler(empty);
   });
   const results = bob.translate({ text: 'Babysit' });
-  assert.equal(bob.requests.length, 2);
-  assert.deepEqual(results, [{ result: { from: 'en', to: 'zh-Hans', toParagraphs: ['照看孩子'] } }]);
-});
-
-test('a second empty choices response is reported once', () => {
-  const bob = plugin({}, request => request.handler({ response: { statusCode: 200 }, data: { choices: [] } }));
-  const results = bob.translate({ text: 'Babysit' });
-  assert.equal(bob.requests.length, 2);
+  assert.equal(bob.requests.length, 1);
+  assert.equal(bob.requests[0].body.messages[1].content, 'Translate to Simplified Chinese:\n\nBabysit');
   assert.equal(results.length, 1);
   assert.equal(results[0].error.type, 'api');
   assert.match(results[0].error.message, /choices/);

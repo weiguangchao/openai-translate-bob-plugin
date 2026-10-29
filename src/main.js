@@ -22,28 +22,13 @@ function translate(query, completion) {
     var to = request.to;
     delete request.from;
     delete request.to;
-    var retrying = false;
-    function send(payload, canRetry) {
-      payload.handler = function (response) {
-        if (completed) return;
-        try {
-          var text;
-          try {
-            text = api.translationText(api.responseData(response, apiKey));
-          } catch (error) {
-            if (canRetry && error.emptyChoices && !retrying) {
-              retrying = true;
-              send(api.translationRetryRequest(payload), false);
-              return;
-            }
-            if (retrying && canRetry) return;
-            throw error;
-          }
-          finish({ result: { from: from, to: to, toParagraphs: [text] } });
-        } catch (error) { report(error); }
-      };
-      $http.request(payload);
-    }
-    send(request, true);
+    request.handler = function (response) {
+      if (completed) return;
+      try {
+        var text = api.translationText(api.responseData(response, apiKey));
+        finish({ result: { from: from, to: to, toParagraphs: [text] } });
+      } catch (error) { report(error); }
+    };
+    $http.request(request);
   } catch (error) { report(error); }
 }

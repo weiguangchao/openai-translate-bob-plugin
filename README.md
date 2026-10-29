@@ -19,13 +19,13 @@ Base URL、API Key 和模型 ID 均不能为空，也不能包含任何空白字
 
 ## 接口行为
 
-翻译固定请求 `POST {baseUrl}/chat/completions`，请求体包含 `model`、`messages` 和 `stream: false`。首次请求和重试请求均发送 `reasoning_effort: "low"`，将上游服务商的思考级别设为 low。
+翻译固定请求 `POST {baseUrl}/chat/completions`，请求体包含 `model`、`messages` 和 `stream: false`。请求发送 `reasoning_effort: "low"`，将上游服务商的思考级别设为 low。
 
 请求使用 `Authorization: Bearer {apiKey}`。插件不会自动添加 `/v1`，因此自定义网关的路径前缀会保留。填写的模型必须支持 Chat Completions。
 
 翻译使用 Bob 检测的源语言和目标语言，也尊重手动指定的语言。结果保留模型返回的换行。鉴权错误、限流、网络错误、空结果、模型拒绝和输出截断都会显示对应提示。
 
-部分模型会把单独的原文当成指令，并以 HTTP 200 返回空的 `choices`（例如用 Gemini 把 `Babysit` 译成中文）。遇到这种响应时，插件会把原文包在 `<source>` 标签里再请求一次，并要求模型只翻译标签内的文本。第二次仍然没有 `choices` 时，才显示原来的错误。
+系统提示词要求模型作为目标语言的专业母语译者处理原文，包括单词、短语、标题和站点名。两段提示词均使用英文目标语言名称，用户消息格式为 `Translate to {目标语言英文名称}:`，空一行后附上原文。插件不添加 XML 标签，接口返回空的 `choices` 时直接显示错误。
 
 Bob 0.10.2 不支持流式插件接口，因此本插件等待完整译文后显示结果。翻译请求超时为 50 秒。长文本和慢速推理模型可能需要缩短原文或更换模型。
 
@@ -60,8 +60,8 @@ test/                Bob 回调边界与安装包检查
 发布前同步 `package.json`、`package-lock.json` 和 `src/info.json` 的版本号，并提交改动。创建并推送 tag，例如：
 
 ```sh
-git tag v0.1.11
-git push origin v0.1.11
+git tag v0.1.12
+git push origin v0.1.12
 ```
 
 推送任意 tag 后，GitHub Actions 会检出该 tag，安装依赖、运行 ESLint 和测试，再构建插件。全部通过后，工作流会创建同名 GitHub Release，自动生成发行说明，并附上 `openai-translate.bobplugin`。只在本地创建 tag 不会触发发布。
