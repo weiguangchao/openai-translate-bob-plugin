@@ -89,7 +89,8 @@ function translationRequest(options, query) {
     header: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + config.apiKey },
     body: {
       model: model,
-      reasoning_effort: 'low',
+      temperature: 0,
+      thinking: { type: 'disabled' },
       stream: false,
       messages: [
         { role: 'system', content: instruction },
