@@ -44,7 +44,10 @@ test('Bob translates with a pasted model ID even when the old model-list action 
   assert.equal(request.header['Content-Type'], 'application/json');
   assert.equal(request.body.model, 'provider/model-a');
   assert.equal(request.body.stream, false);
-  assert.equal(request.body.reasoning_effort, 'low');
+  const body = JSON.parse(JSON.stringify(request.body));
+  assert.equal(body.temperature, 0);
+  assert.deepEqual(body.thinking, { type: 'disabled' });
+  assert.ok(!('reasoning_effort' in body));
   assert.equal(request.body.messages[1].content, 'Translate to Simplified Chinese:\n\nHello.\n\nWorld.');
   assert.equal(request.body.messages[0].role, 'system');
   assert.equal(request.body.messages[1].role, 'user');
@@ -145,9 +148,25 @@ test('provider errors are reported once, without exposing the key or accepting p
   for (const [name, response, type, message] of cases) await t.test(name, () => {
     const bob = plugin({}, request => { request.handler(response); request.handler(response); });
     const results = bob.translate();
+    assert.equal(bob.requests.length, 1);
     assert.equal(results.length, 1);
     assert.equal(results[0].error.type, type);
     assert.match(results[0].error.message, message);
     assert.ok(!JSON.stringify(results).includes('test-secret'));
   });
+});
+
+test('a provider that rejects a parameter gets the same request again on the next translation', () => {
+  const rejection = { response: { statusCode: 400 }, data: { error: { message: 'Unsupported parameter: thinking' } } };
+  const bob = plugin({}, request => request.handler(rejection));
+  const first = bob.translate();
+  const second = bob.translate();
+  assert.equal(bob.requests.length, 2);
+  assert.match(first[0].error.message, /^HTTP 400：.*Unsupported parameter: thinking/);
+  assert.equal(second[0].error.type, 'network');
+  for (const request of bob.requests) {
+    const body = JSON.parse(JSON.stringify(request.body));
+    assert.equal(body.temperature, 0);
+    assert.deepEqual(body.thinking, { type: 'disabled' });
+  }
 });
